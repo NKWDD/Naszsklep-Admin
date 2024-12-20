@@ -66,10 +66,12 @@ function SettingsPage({swal}) {
         <>
           <label>Featured product</label>
           <select value={featuredProductId} onChange={ev => setFeaturedProductId(ev.target.value)}>
-            {products.length > 0 && products.map(product => (
-              <option value={product._id}>{product.title}</option>
-            ))}
-          </select>
+          {products.length > 0 && products.map(product => (
+            <option key={product._id} value={product._id}>
+              {product.title}
+            </option>
+          ))}
+        </select>
           <label>Shipping price (in euro)</label>
           <input type="number"
                  value={shippingFee}

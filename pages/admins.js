@@ -88,28 +88,33 @@ function AdminsPage({swal}) {
           </tr>
         </thead>
         <tbody>
-          {isLoading && (
-            <tr>
-              <td colSpan={2}>
-                <div className="py-4">
-                  <Spinner fullWidth={true} />
-                </div>
-              </td>
-            </tr>
-          )}
-          {adminEmails.length > 0 && adminEmails.map(adminEmail => (
-            <tr>
-              <td>{adminEmail.email}</td>
-              <td>
-                {adminEmail.createdAt && prettyDate(adminEmail.createdAt)}
-              </td>
-              <td>
-                <button
-                  onClick={() => deleteAdmin(adminEmail._id, adminEmail.email)} className="btn-red">Delete</button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
+  {isLoading && (
+    <tr>
+      <td colSpan={2}>
+        <div className="py-4">
+          <Spinner fullWidth={true} />
+        </div>
+      </td>
+    </tr>
+  )}
+  {adminEmails.length > 0 && adminEmails.map((adminEmail) => (
+    <tr key={adminEmail._id}> {/* Add the key prop here */}
+      <td>{adminEmail.email}</td>
+      <td>
+        {adminEmail.createdAt && prettyDate(adminEmail.createdAt)}
+      </td>
+      <td>
+        <button
+          onClick={() => deleteAdmin(adminEmail._id, adminEmail.email)} 
+          className="btn-red"
+        >
+          Delete
+        </button>
+      </td>
+    </tr>
+  ))}
+</tbody>
+
       </table>
     </Layout>
   );

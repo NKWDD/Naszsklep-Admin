@@ -116,8 +116,10 @@ function Categories({swal}) {
                   onChange={ev => setParentCategory(ev.target.value)}
                   value={parentCategory}>
             <option value="">No parent category</option>
-            {categories.length > 0 && categories.map(category => (
-              <option value={category._id}>{category.name}</option>
+            {categories.length > 0 && categories.map((category) => (
+            <option key={category._id} value={category._id}>
+            {category.name}
+          </option>
             ))}
           </select>
         </div>
@@ -129,30 +131,31 @@ function Categories({swal}) {
             className="btn-default text-sm mb-2">
             Add new property
           </button>
-          {properties.length > 0 && properties.map((property,index) => (
-            <div className="flex gap-1 mb-2">
-              <input type="text"
-                     value={property.name}
-                     className="mb-0"
-                     onChange={ev => handlePropertyNameChange(index,property,ev.target.value)}
-                     placeholder="property name (example: color)"/>
-              <input type="text"
-                     className="mb-0"
-                     onChange={ev =>
-                       handlePropertyValuesChange(
-                         index,
-                         property,ev.target.value
-                       )}
-                     value={property.values}
-                     placeholder="values, comma separated"/>
-              <button
-                onClick={() => removeProperty(index)}
-                type="button"
-                className="btn-red">
-                Remove
-              </button>
-            </div>
-          ))}
+          {properties.length > 0 && properties.map((property, index) => (
+          <div key={index} className="flex gap-1 mb-2">
+            <input
+              type="text"
+              value={property.name}
+              className="mb-0"
+              onChange={ev => handlePropertyNameChange(index, property, ev.target.value)}
+              placeholder="property name (example: color)"
+            />
+            <input
+              type="text"
+              className="mb-0"
+              onChange={ev => handlePropertyValuesChange(index, property, ev.target.value)}
+              value={property.values}
+              placeholder="values, comma separated"
+            />
+            <button
+              onClick={() => removeProperty(index)}
+              type="button"
+              className="btn-red"
+            >
+              Remove
+            </button>
+          </div>
+        ))}
         </div>
         <div className="flex gap-1">
           {editedCategory && (
@@ -191,23 +194,26 @@ function Categories({swal}) {
               </td>
             </tr>
           )}
-          {categories.length > 0 && categories.map(category => (
-            <tr>
-              <td>{category.name}</td>
-              <td>{category?.parent?.name}</td>
-              <td>
-                <button
-                  onClick={() => editCategory(category)}
-                  className="btn-default mr-1"
-                >
-                  Edit
-                </button>
-                <button
-                  onClick={() => deleteCategory(category)}
-                  className="btn-red">Delete</button>
-              </td>
-            </tr>
-          ))}
+            {categories.length > 0 && categories.map((category) => (
+              <tr key={category._id}>
+                <td>{category.name}</td>
+                <td>{category?.parent?.name}</td>
+                <td>
+                  <button
+                    onClick={() => editCategory(category)}
+                    className="btn-default mr-1"
+                  >
+                    Edit
+                  </button>
+                  <button
+                    onClick={() => deleteCategory(category)}
+                    className="btn-red"
+                  >
+                    Delete
+                  </button>
+                </td>
+              </tr>
+            ))}
           </tbody>
         </table>
       )}

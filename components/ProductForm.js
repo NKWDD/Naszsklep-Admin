@@ -122,34 +122,33 @@ export default function ProductForm({
         {categoriesLoading && (
           <Spinner />
         )}
-        {propertiesToFill.length > 0 && propertiesToFill.map(p => (
-          <div className="">
-            <label>{p.name[0].toUpperCase()+p.name.substring(1)}</label>
+        {propertiesToFill.length > 0 && propertiesToFill.map((p, index) => (
+          <div key={index} className="">
+            <label>{p.name[0].toUpperCase() + p.name.substring(1)}</label>
             <div>
-              <select value={productProperties[p.name]}
-                      onChange={ev =>
-                        setProductProp(p.name,ev.target.value)
-                      }
+              <select
+                value={productProperties[p.name]}
+                onChange={ev => setProductProp(p.name, ev.target.value)}
               >
-                {p.values.map(v => (
-                  <option value={v}>{v}</option>
+                {p.values.map((v, idx) => (
+                  <option key={idx} value={v}>{v}</option>
                 ))}
               </select>
+            </div>
           </div>
-        </div>
-      ))}
+        ))}
       <label>Photos</label>
       <div className="mb-2 flex flex-wrap gap-1">
-        <ReactSortable
-          list={images}
-          className="flex flex-wrap gap-1"
-          setList={updateImagesOrder}>
-          {!!images?.length && images.map(link => (
-            <div key={link} className="h-24 bg-white p-4 shadow-sm rounded-sm border border-gray-200">
-              <img src={link} alt="" className="rounded-lg" />
-            </div>
-          ))}
-        </ReactSortable>
+      <ReactSortable
+        list={images}
+        className="flex flex-wrap gap-1"
+        setList={updateImagesOrder}>
+        {!!images?.length && images.map(link => (
+          <div key={link} className="h-24 bg-white p-4 shadow-sm rounded-sm border border-gray-200">
+            <img src={link} alt="" className="rounded-lg" />
+          </div>
+        ))}
+      </ReactSortable>
         {isUploading && (
           <div className="h-24 flex items-center">
             <Spinner />
