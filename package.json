@@ -2,7 +2,9 @@
   "name": "naszsklep-admin",
   "version": "1.0.0",
   "scripts": {
-    "dev": "next dev"
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start"
   },
   "dependencies": {
     "@next-auth/mongodb-adapter": "^1.1.3",
