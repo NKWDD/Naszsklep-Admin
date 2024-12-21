@@ -7,8 +7,11 @@ import { mongooseConnect } from '@/lib/mongoose';
 
 // Helper function to check if an email belongs to an admin
 async function isAdminEmail(email) {
-  await mongooseConnect(); // Ensure database connection
-  return !!(await Admin.findOne({ email }));
+  if (!email) return false; // Ensure the email exists
+  await mongooseConnect(); // Connect to the database
+  const admin = await Admin.findOne({ email });
+  console.log("Admin Check:", { email, isAdmin: !!admin }); // Debug log
+  return !!admin; // Return true if the admin exists
 }
 
 export const authOptions = {
@@ -21,16 +24,17 @@ export const authOptions = {
   adapter: MongoDBAdapter(clientPromise),
   callbacks: {
     session: async ({ session }) => {
-      // Check if the user's email belongs to an admin
       const isAdmin = await isAdminEmail(session?.user?.email);
       if (isAdmin) {
-        session.user.isAdmin = true; // Add isAdmin flag to session
-        return session;
+        session.user.isAdmin = true; // Mark user as admin
+        return session; // Allow session creation
       } else {
-        return null; // Return null to deny session creation for non-admin users
+        console.log("Session denied for non-admin:", session?.user?.email); // Debug log
+        return null; // Deny session for non-admin users
       }
     },
   },
+  secret: process.env.NEXTAUTH_SECRET, // Secret required for production
 };
 
 export default NextAuth(authOptions);
@@ -40,7 +44,6 @@ export async function isAdminRequest(req, res) {
   const session = await getServerSession(req, res, authOptions);
   if (!session || !session.user?.isAdmin) {
     res.status(401).json({ message: 'Unauthorized. Only admins can access this route.' });
-    throw new Error('Not an admin'); 
-    
+    throw new Error('Not an admin');
   }
 }
