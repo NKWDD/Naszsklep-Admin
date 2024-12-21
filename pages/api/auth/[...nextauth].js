@@ -1,12 +1,17 @@
-import clientPromise from "@/lib/mongodb";
-import { MongoDBAdapter } from "@next-auth/mongodb-adapter";
-import NextAuth, { getServerSession } from "next-auth";
-import GoogleProvider from "next-auth/providers/google";
-import { mongooseConnect } from "@/lib/mongoose";
-import { Admin } from "@/models/Admin";
+import NextAuth, { getServerSession } from 'next-auth';
+import GoogleProvider from 'next-auth/providers/google';
+import { MongoDBAdapter } from '@next-auth/mongodb-adapter';
+import clientPromise from '@/lib/mongodb';
+import { Admin } from '@/models/Admin';
+import { mongooseConnect } from '@/lib/mongoose';
+
+// Helper function to check if an email belongs to an admin
+async function isAdminEmail(email) {
+  await mongooseConnect(); // Ensure database connection
+  return !!(await Admin.findOne({ email }));
+}
 
 export const authOptions = {
-  secret: process.env.SECRET,
   providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_ID,
@@ -15,32 +20,26 @@ export const authOptions = {
   ],
   adapter: MongoDBAdapter(clientPromise),
   callbacks: {
-    async session({ session }) {
-      await mongooseConnect(); // Ensure database connection
-      const isAdmin = !!(await Admin.findOne({ email: session?.user?.email }));
-      return {
-        ...session,
-        isAdmin, // Add the `isAdmin` flag to the session
-      };
+    session: async ({ session }) => {
+      // Check if the user's email belongs to an admin
+      const isAdmin = await isAdminEmail(session?.user?.email);
+      if (isAdmin) {
+        session.user.isAdmin = true; // Add isAdmin flag to session
+        return session;
+      } else {
+        return null; // Return null to deny session creation for non-admin users
+      }
     },
   },
-  
 };
 
 export default NextAuth(authOptions);
 
+// Middleware function to restrict access to admin routes
 export async function isAdminRequest(req, res) {
-  await mongooseConnect(); // Ensure database connection
   const session = await getServerSession(req, res, authOptions);
-
-  if (!session?.user?.email) {
-    res.status(401).json({ message: "Unauthorized: No session found" });
-    throw new Error("Unauthorized");
-  }
-
-  const isAdmin = await Admin.findOne({ email: session.user.email });
-  if (!isAdmin) {
-    res.status(403).json({ message: "Forbidden: You no longer have admin access." });
-    throw new Error("Forbidden: User is not an admin");
+  if (!session || !session.user?.isAdmin) {
+    res.status(401).json({ message: 'Unauthorized. Only admins can access this route.' });
+    throw new Error('Not an admin');
   }
 }
