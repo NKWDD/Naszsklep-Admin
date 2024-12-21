@@ -13,7 +13,7 @@ export default function ProductForm({
   category: assignedCategory,
   properties: assignedProperties,
   discountPrice: existingDiscountPrice,
-  unitType: existingUnitType,
+  unit: existingUnit, 
 }) {
   const [title, setTitle] = useState(existingTitle || '');
   const [description, setDescription] = useState(existingDescription || '');
@@ -26,8 +26,8 @@ export default function ProductForm({
   const [categories, setCategories] = useState([]);
   const [categoriesLoading, setCategoriesLoading] = useState(false);
   const [discountPrice, setDiscountPrice] = useState(existingDiscountPrice || '');
-  const [unitType, setUnitType] = useState(existingUnitType || '');
-  const [unitValue, setUnitValue] = useState('');
+  const [unitType, setUnitType] = useState(existingUnit?.type || ""); 
+  const [unitValue, setUnitValue] = useState(existingUnit?.value || ""); 
   const router = useRouter();
 
   useEffect(() => {
@@ -48,7 +48,7 @@ export default function ProductForm({
       images,
       category,
       properties: productProperties,
-      unit: { type: unitType, value: unitValue }, // Ensure this is properly structured
+      unit: { type: unitType, value: unitValue }, 
     };
     
     if (_id) {

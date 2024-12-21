@@ -11,11 +11,15 @@ const ProductSchema = new Schema(
     category: { type: mongoose.Types.ObjectId, ref: 'Category' },
     properties: { type: Object },
     unit: {
-      type: new mongoose.Schema({
-        type: { type: String, required: true }, // e.g., 'kg', 'g', 'l', 'ml'
-        value: { type: Number, required: true }, // e.g., 250
-      }),
-    },
+        type: new mongoose.Schema(
+          {
+            type: { type: String, required: true }, 
+            value: { type: Number, required: true }, 
+          },
+          { _id: false } 
+        ),
+      },
+      
   },
   { timestamps: true } // Moved here
 );
