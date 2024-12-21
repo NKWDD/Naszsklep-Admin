@@ -20,10 +20,11 @@ export const authOptions = {
       const isAdmin = !!(await Admin.findOne({ email: session?.user?.email }));
       return {
         ...session,
-        isAdmin,
+        isAdmin, // Add the `isAdmin` flag to the session
       };
     },
   },
+  
 };
 
 export default NextAuth(authOptions);
