@@ -40,6 +40,7 @@ export async function isAdminRequest(req, res) {
   const session = await getServerSession(req, res, authOptions);
   if (!session || !session.user?.isAdmin) {
     res.status(401).json({ message: 'Unauthorized. Only admins can access this route.' });
-    throw new Error('Not an admin');
+    throw new Error('Not an admin'); 
+    
   }
 }
