@@ -1,41 +1,45 @@
-import clientPromise from '@/lib/mongodb'
-import {MongoDBAdapter} from "@next-auth/mongodb-adapter";
-import NextAuth, { getServerSession } from 'next-auth'
-import GoogleProvider from 'next-auth/providers/google'
-
-const adminEmails = ['kamilkala125@gmail.com']
+import clientPromise from "@/lib/mongodb";
+import { MongoDBAdapter } from "@next-auth/mongodb-adapter";
+import NextAuth, { getServerSession } from "next-auth";
+import GoogleProvider from "next-auth/providers/google";
+import { mongooseConnect } from "@/lib/mongoose";
+import { Admin } from "@/models/Admin";
 
 export const authOptions = {
   secret: process.env.SECRET,
   providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_ID,
-      clientSecret: process.env.GOOGLE_SECRET
+      clientSecret: process.env.GOOGLE_SECRET,
     }),
   ],
   adapter: MongoDBAdapter(clientPromise),
-  
   callbacks: {
-    session: ({session, token, user}) => {
-      if  (adminEmails.includes(session?.user?.email)) {
-        return session;
-      }
-        else {
-        return false;
-      }
+    async session({ session }) {
+      await mongooseConnect(); // Ensure database connection
+      const isAdmin = !!(await Admin.findOne({ email: session?.user?.email }));
+      return {
+        ...session,
+        isAdmin,
+      };
+    },
   },
-  },
-}
+};
 
 export default NextAuth(authOptions);
 
-export async function isAdminRequest(req, res) 
-{
-  const session =  await getServerSession(req, res, authOptions);
-  if (!adminEmails.includes(session?.user?.email)) {
-    res.status(401);
-    res.end();
-    throw 'not an admin';
+export async function isAdminRequest(req, res) {
+  await mongooseConnect(); // Ensure database connection
+  const session = await getServerSession(req, res, authOptions);
+
+  if (!session?.user?.email) {
+    res.status(401).json({ message: "Unauthorized: No session found" });
+    throw new Error("Unauthorized");
   }
 
+  const isAdmin = await Admin.findOne({ email: session.user.email });
+  if (!isAdmin) {
+    res.status(403).json({ message: "Forbidden: You no longer have admin access." });
+    throw new Error("Forbidden: User is not an admin");
+  }
 }
