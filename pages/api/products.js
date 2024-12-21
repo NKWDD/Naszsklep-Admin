@@ -52,7 +52,7 @@ export default async function handle(req, res) {
   }
 
   if (method === "POST") {
-    const { vendor, title, description, price, discountPrice, images, category, properties } = req.body;
+    const { vendor, title, description, price, discountPrice, images, category, properties, unit } = req.body;
 
     const productData = {
       vendor,
@@ -62,17 +62,20 @@ export default async function handle(req, res) {
       discountPrice,
       images,
       properties: properties || {},
+      unit,
     };
+    
     if (category && category.trim() !== "") {
       productData.category = category;
     }
+    console.log(req.body); // Log to check if unit is present
 
     const productDoc = await Product.create(productData);
     return res.json(productDoc);
   }
 
   if (method === "PUT") {
-    const { vendor, title, description, price, discountPrice, images, category, properties, _id } = req.body;
+    const { vendor, title, description, price, discountPrice, images, category, properties, unit, _id } = req.body;
 
     const updateData = {
       vendor,
@@ -82,13 +85,16 @@ export default async function handle(req, res) {
       discountPrice,
       images,
       properties: properties || {},
+      unit,
     };
+    
     if (category && category.trim() !== "") {
       updateData.category = category;
     }
-
+    
     await Product.updateOne({ _id }, updateData);
     return res.json(true);
+    
   }
 
   if (method === "DELETE") {
