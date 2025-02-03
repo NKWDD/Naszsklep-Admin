@@ -48,8 +48,12 @@ export default function ProductForm({
       images,
       category,
       properties: productProperties,
-      unit: { type: unitType, value: unitValue }, 
     };
+
+    if (unitType && unitValue) {
+      data.unit = { type: unitType, value: unitValue };
+    }
+    
     
     if (_id) {
       await axios.put('/api/products', { ...data, _id });
