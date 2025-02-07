@@ -12,37 +12,67 @@ export const config = {
 const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
 const handleStripeWebhook = async (req, res) => {
-  const sig = req.headers['stripe-signature'];
-  const reqBuffer = await buffer(req);
-  
-  let event;
-
   try {
-    // Verify the webhook signature
-    event = stripe.webhooks.constructEvent(reqBuffer, sig, endpointSecret);
-  } catch (err) {
-    console.log(`Webhook signature verification failed: ${err.message}`);
-    return res.status(400).send(`Webhook Error: ${err.message}`);
-  }
+    const sig = req.headers['stripe-signature'];
+    const reqBuffer = await buffer(req);
+    
+    let event;
 
-  // Handle the event
-  if (event.type === 'checkout.session.completed') {
-    const session = event.data.object;
-    const orderId = session.metadata.orderId; // This is the order ID we passed to Stripe
-
-    // Connect to the database
-    await mongooseConnect();
-
-    // Find and update the order's paid status
-    const order = await Order.findById(orderId);
-    if (order) {
-      order.paid = true;
-      await order.save();
-      console.log(`Order ${orderId} has been paid.`);
+    try {
+      event = stripe.webhooks.constructEvent(reqBuffer, sig, endpointSecret);
+      console.log('Webhook event verified:', event.type);
+    } catch (err) {
+      console.error('Webhook signature verification failed:', err.message);
+      return res.status(400).send(`Webhook Error: ${err.message}`);
     }
-  }
 
-  res.status(200).send('Webhook received');
+    if (event.type === 'checkout.session.completed') {
+      const session = event.data.object;
+      
+      console.log('Processing checkout session:', {
+        sessionId: session.id,
+        orderId: session.metadata?.orderId,
+        paymentStatus: session.payment_status
+      });
+
+      try {
+        await mongooseConnect();
+        
+        // Find the order using the orderId from metadata
+        const order = await Order.findById(session.metadata?.orderId);
+        
+        if (!order) {
+          console.error('Order not found:', session.metadata?.orderId);
+          return res.status(404).json({ error: 'Order not found' });
+        }
+
+        // Update order with payment information
+        order.paid = true;
+        order.paymentStatus = 'paid';
+        order.stripeSessionId = session.id;
+        order.paymentIntent = session.payment_intent;
+        order.totalAmount = session.amount_total / 100; // Convert from cents to whole currency units
+
+        await order.save();
+        console.log('Order updated successfully:', order._id);
+
+        return res.status(200).json({
+          received: true,
+          orderId: order._id,
+          status: 'success'
+        });
+      } catch (error) {
+        console.error('Error processing order:', error);
+        return res.status(500).json({ error: 'Error processing order' });
+      }
+    }
+
+    // Handle other event types if needed
+    res.status(200).json({ received: true });
+  } catch (error) {
+    console.error('Webhook error:', error);
+    res.status(500).json({ error: 'Webhook processing error' });
+  }
 };
 
 export default handleStripeWebhook;
