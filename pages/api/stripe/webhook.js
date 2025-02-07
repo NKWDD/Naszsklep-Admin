@@ -1,5 +1,6 @@
 import { buffer } from 'micro';
 import { mongooseConnect } from "@/lib/mongoose";
+import mongoose from 'mongoose';
 import { Order } from "@/models/Order";
 const stripe = require('stripe')(process.env.STRIPE_SK);
 
@@ -38,13 +39,13 @@ const handleStripeWebhook = async (req, res) => {
       try {
         await mongooseConnect();
         
-        // Find the order using the orderId from metadata
-        const order = await Order.findById(session.metadata?.orderId);
-        
-        if (!order) {
-          console.error('Order not found:', session.metadata?.orderId);
-          return res.status(404).json({ error: 'Order not found' });
+        const orderId = session.metadata?.orderId;
+        if (!orderId) {
+          console.error('Missing orderId in metadata:', session.metadata);
+          return res.status(400).json({ error: 'Order ID missing in session metadata' });
         }
+        
+        const order = await Order.findById(new mongoose.Types.ObjectId(orderId));
 
         // Update order with payment information
         order.paid = true;
