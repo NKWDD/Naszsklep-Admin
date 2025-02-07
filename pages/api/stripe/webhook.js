@@ -1,79 +1,49 @@
-import { buffer } from 'micro';
-import { mongooseConnect } from "@/lib/mongoose";
 import mongoose from 'mongoose';
 import { Order } from "@/models/Order";
-const stripe = require('stripe')(process.env.STRIPE_SK);
 
-export const config = {
-  api: {
-    bodyParser: false,
-  },
-};
+export default async function handler(req, res) {
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method Not Allowed' });
+  }
 
-const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
-
-const handleStripeWebhook = async (req, res) => {
   try {
-    const sig = req.headers['stripe-signature'];
-    const reqBuffer = await buffer(req);
-    
-    let event;
+    const event = req.body;
 
-    try {
-      event = stripe.webhooks.constructEvent(reqBuffer, sig, endpointSecret);
-      console.log('Webhook event verified:', event.type);
-    } catch (err) {
-      console.error('Webhook signature verification failed:', err.message);
-      return res.status(400).send(`Webhook Error: ${err.message}`);
-    }
-
+    // ✅ Check if it's a checkout.session.completed event
     if (event.type === 'checkout.session.completed') {
       const session = event.data.object;
-      
-      console.log('Processing checkout session:', {
-        sessionId: session.id,
-        orderId: session.metadata?.orderId,
-        paymentStatus: session.payment_status
-      });
 
-      try {
-        await mongooseConnect();
-        
-        const orderId = session.metadata?.orderId;
-        if (!orderId) {
-          console.error('Missing orderId in metadata:', session.metadata);
-          return res.status(400).json({ error: 'Order ID missing in session metadata' });
-        }
-        
-        const order = await Order.findById(new mongoose.Types.ObjectId(orderId));
+      // ✅ Retrieve orderId from session metadata
+      const orderId = session.metadata?.orderId;
+      console.log('✅ Received orderId:', orderId);
 
-        // Update order with payment information
-        order.paid = true;
-        order.paymentStatus = 'paid';
-        order.stripeSessionId = session.id;
-        order.paymentIntent = session.payment_intent;
-        order.totalAmount = session.amount_total / 100; // Convert from cents to whole currency units
-
-        await order.save();
-        console.log('Order updated successfully:', order._id);
-
-        return res.status(200).json({
-          received: true,
-          orderId: order._id,
-          status: 'success'
-        });
-      } catch (error) {
-        console.error('Error processing order:', error);
-        return res.status(500).json({ error: 'Error processing order' });
+      if (!orderId) {
+        console.error('❌ Missing orderId in session metadata');
+        return res.status(400).json({ error: 'Order ID missing in session metadata' });
       }
+
+      // ✅ Convert orderId to MongoDB ObjectId
+      const objectId = new mongoose.Types.ObjectId(orderId);
+
+      // ✅ Update the order in MongoDB
+      const updatedOrder = await Order.findByIdAndUpdate(
+        objectId,
+        { paid: true, updatedAt: new Date() },
+        { new: true }
+      );
+
+      if (!updatedOrder) {
+        console.error('❌ Order not found:', orderId);
+        return res.status(404).json({ error: 'Order not found' });
+      }
+
+      console.log('✅ Order updated successfully:', updatedOrder);
+      return res.status(200).json({ success: true });
     }
 
-    // Handle other event types if needed
-    res.status(200).json({ received: true });
+    res.status(400).json({ error: 'Unhandled event type' });
   } catch (error) {
-    console.error('Webhook error:', error);
-    res.status(500).json({ error: 'Webhook processing error' });
+    console.error('❌ Error processing webhook:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
   }
-};
-
-export default handleStripeWebhook;
+}
