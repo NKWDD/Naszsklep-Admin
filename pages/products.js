@@ -13,6 +13,10 @@ export default function Products() {
 
   // Fetch products with optional search query and pagination
   useEffect(() => {
+    setCurrentPage(1); // Reset to first page when search changes
+  }, [search]);
+  
+  useEffect(() => {
     setIsLoading(true);
     axios
       .get("/api/products", {
@@ -29,7 +33,8 @@ export default function Products() {
         console.error("Error fetching products:", error);
         setIsLoading(false);
       });
-  }, [search, currentPage]); // Refetch when search or page changes
+  }, [search, currentPage]); // Now it resets when search updates
+  
   
 
   return (

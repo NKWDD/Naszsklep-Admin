@@ -9,47 +9,55 @@ export default async function handle(req, res) {
 
   if (method === "GET") {
     try {
-      const { id, phrase, page = 1 } = req.query;
-      const limit = 25;
-      const skip = (page - 1) * limit;
-
+      const { id, phrase, page = 1, all } = req.query;
+      
       if (id) {
         const product = await Product.findById(id);
         if (!product) {
           return res.status(404).json({ error: "Product not found" });
         }
         return res.json(product);
-      } else {
-        const productsQuery = {};
-        if (phrase) {
-          productsQuery["$or"] = [
-            { title: { $regex: phrase, $options: "i" } },
-            { description: { $regex: phrase, $options: "i" } },
-          ];
-        }
-
-        // Fetch products based on the query
-        const products = await Product.find(productsQuery)
-          .skip(skip)
-          .limit(limit)
-          .sort({ createdAt: -1 });
-
-        // Count the total number of products to calculate totalPages
-        const totalProducts = await Product.countDocuments(productsQuery);
-        const totalPages = Math.ceil(totalProducts / limit);
-
-        // Send products and pagination data
-        return res.json({
-          products,
-          currentPage: parseInt(page),
-          totalPages,
-        });
+      } 
+  
+      const productsQuery = {};
+      if (phrase) {
+        productsQuery["$or"] = [
+          { title: { $regex: phrase, $options: "i" } },
+          { description: { $regex: phrase, $options: "i" } },
+        ];
       }
+  
+      let products, totalPages = 1;
+  
+      if (all) {
+        // Fetch all products (used for settings page)
+        products = await Product.find(productsQuery).sort({ createdAt: -1 });
+      } else {
+        // Apply search first, then paginate
+        const allFilteredProducts = await Product.find(productsQuery).sort({ createdAt: -1 });
+  
+        // Paginate results
+        const limit = 25;
+        const skip = (page - 1) * limit;
+        products = allFilteredProducts.slice(skip, skip + limit);
+  
+        // Calculate total pages only when paginating
+        totalPages = Math.ceil(allFilteredProducts.length / limit);
+      }
+  
+      return res.json({
+        products,
+        currentPage: all ? 1 : parseInt(page),
+        totalPages,
+      });
+  
     } catch (error) {
       console.error("Error in Products API:", error);
       return res.status(500).json({ error: "Internal server error" });
     }
   }
+  
+  
 
   if (method === "POST") {
     const { vendor, title, description, price, discountPrice, images, category, properties, unit } = req.body;

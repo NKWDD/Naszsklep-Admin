@@ -20,16 +20,18 @@ function SettingsPage({swal}) {
   async function fetchAll() {
     setIsLoading(true);
     try {
-      const productsResponse = await axios.get('/api/products');
-      console.log("Fetched products:", productsResponse.data); // Log the fetched products
-      setProducts(productsResponse.data.products || []); // Update the products state
+      const productsResponse = await axios.get('/api/products', {
+        params: { all: true }, // Fetch all products
+      });
+      console.log("Fetched products:", productsResponse.data); 
+      setProducts(productsResponse.data.products || []);
   
       const featuredProductResponse = await axios.get('/api/settings?name=featuredProductId');
-      console.log("Fetched featured product ID:", featuredProductResponse.data); // Log the featured product ID
+      console.log("Fetched featured product ID:", featuredProductResponse.data);
       setFeaturedProductId(featuredProductResponse.data.value);
   
       const shippingFeeResponse = await axios.get('/api/settings?name=shippingFee');
-      console.log("Fetched shipping fee:", shippingFeeResponse.data); // Log the shipping fee
+      console.log("Fetched shipping fee:", shippingFeeResponse.data);
       setShippingFee(shippingFeeResponse.data.value);
     } catch (error) {
       console.error("Error fetching settings:", error);
@@ -37,6 +39,7 @@ function SettingsPage({swal}) {
       setIsLoading(false);
     }
   }
+  
   
 
   async function saveSettings() {
@@ -72,11 +75,6 @@ function SettingsPage({swal}) {
             </option>
           ))}
         </select>
-          <label>Shipping price (in euro)</label>
-          <input type="number"
-                 value={shippingFee}
-                 onChange={ev => setShippingFee(ev.target.value)}
-          />
           <div>
             <button onClick={saveSettings} className="btn-primary">Save settings</button>
           </div>
