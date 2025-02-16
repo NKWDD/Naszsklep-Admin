@@ -60,22 +60,27 @@ export default function OrderDetailsPage() {
             <strong>Address:</strong> {order.streetAddress}, {order.city}, {order.country}
           </p>
         </div>
-
         <div className="bg-white shadow-lg rounded-lg p-6">
-          <h2 className="text-2xl font-semibold text-gray-700 mb-4">Products</h2>
-          {order.line_items.length > 0 ? (
-            <ul className="space-y-4">
-              {order.line_items.map((item, index) => (
-                <li key={index} className="flex justify-between items-center">
+        <h2 className="text-2xl font-semibold text-gray-700 mb-4">Products</h2>
+        {order.line_items.length > 0 ? (
+          <ul className="space-y-4">
+            {order.line_items.map((item, index) => (
+              <li key={index} className="flex justify-between items-center">
+                <div>
                   <span className="text-lg text-gray-800">{item.price_data?.product_data.name}</span>
+                  <div className="text-sm text-gray-500">Price: €{((item.price_data?.unit_amount / 100) * item.quantity).toFixed(2)}</div> {/* Assuming price is in cents */}
+                </div>
+                <div>
                   <span className="text-lg text-gray-600">x{item.quantity}</span>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="text-lg text-gray-600">No products found in this order.</p>
-          )}
-        </div>
+                </div>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="text-lg text-gray-600">No products found in this order.</p>
+        )}
+      </div>
+
       </div>
     </Layout>
   );
