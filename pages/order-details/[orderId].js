@@ -41,7 +41,7 @@ export default function OrderDetailsPage() {
     return (
       <Layout>
         <div className="text-center py-10">
-          <h1 className="text-xl font-semibold text-red-600">Order not found</h1>
+          <h1 className="text-xl font-semibold text-red-600">Order not found!</h1>
         </div>
       </Layout>
     );
