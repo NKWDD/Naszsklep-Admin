@@ -25,8 +25,7 @@ export default async function handle(req, res) {
     if (settingDoc) {
       res.json(settingDoc);
     } else {
-      res.json({value: ''}); 
+      res.json({value: name === 'featuredProductIds' ? [] : ''}); 
     }
   }
-  
 }

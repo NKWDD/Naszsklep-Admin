@@ -6,7 +6,7 @@ import {withSwal} from "react-sweetalert2";
 
 function SettingsPage({swal}) {
   const [products, setProducts] = useState([]);
-  const [featuredProductId, setFeaturedProductId] = useState('');
+  const [featuredProductIds, setFeaturedProductIds] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [shippingFee, setShippingFee] = useState('');
 
@@ -26,9 +26,9 @@ function SettingsPage({swal}) {
       console.log("Fetched products:", productsResponse.data); 
       setProducts(productsResponse.data.products || []);
   
-      const featuredProductResponse = await axios.get('/api/settings?name=featuredProductId');
-      console.log("Fetched featured product ID:", featuredProductResponse.data);
-      setFeaturedProductId(featuredProductResponse.data.value);
+      const featuredProductsResponse = await axios.get('/api/settings?name=featuredProductIds');
+      console.log("Fetched featured product IDs:", featuredProductsResponse.data);
+      setFeaturedProductIds(featuredProductsResponse.data.value || []);
   
       const shippingFeeResponse = await axios.get('/api/settings?name=shippingFee');
       console.log("Fetched shipping fee:", shippingFeeResponse.data);
@@ -40,13 +40,16 @@ function SettingsPage({swal}) {
     }
   }
   
-  
+  function handleProductSelection(ev) {
+    const selectedOptions = Array.from(ev.target.selectedOptions, option => option.value);
+    setFeaturedProductIds(selectedOptions.slice(0, 5)); // Limit to 5 products
+  }
 
   async function saveSettings() {
     setIsLoading(true);
     await axios.put('/api/settings', {
-      name: 'featuredProductId',
-      value: featuredProductId,
+      name: 'featuredProductIds',
+      value: featuredProductIds,
     });
     await axios.put('/api/settings', {
       name: 'shippingFee',
@@ -67,15 +70,22 @@ function SettingsPage({swal}) {
       )}
       {!isLoading && (
         <>
-          <label>Featured product</label>
-          <select value={featuredProductId} onChange={ev => setFeaturedProductId(ev.target.value)}>
-          {products.length > 0 && products.map(product => (
-            <option key={product._id} value={product._id}>
-              {product.title}
-            </option>
-          ))}
-        </select>
-          <div>
+          <label>Featured products (select up to 5)</label>
+          <select 
+            multiple 
+            value={featuredProductIds} 
+            onChange={handleProductSelection}
+            className="h-40" // Make tall enough to display multiple items
+          >
+            {products.length > 0 && products.map(product => (
+              <option key={product._id} value={product._id}>
+                {product.title}
+              </option>
+            ))}
+          </select>
+          <p className="text-sm text-gray-500 mt-1">Hold Ctrl (Windows) or Cmd (Mac) to select multiple products</p>
+          
+          <div className="mt-4">
             <button onClick={saveSettings} className="btn-primary">Save settings</button>
           </div>
         </>
